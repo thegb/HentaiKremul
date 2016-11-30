@@ -416,8 +416,8 @@ module_param(rcu_kick_kthreads, bool, 0644);
  * How long the grace period must be before we start recruiting
  * quiescent-state help from rcu_note_context_switch().
  */
-static ulong jiffies_till_sched_qs = HZ / 20;
-module_param(jiffies_till_sched_qs, ulong, 0644);
+static ulong jiffies_till_sched_qs = HZ / 10;
+module_param(jiffies_till_sched_qs, ulong, 0444);
 
 static bool rcu_start_gp_advanced(struct rcu_state *rsp, struct rcu_node *rnp,
 				  struct rcu_data *rdp);
@@ -1154,12 +1154,10 @@ static int dyntick_save_progress_counter(struct rcu_data *rdp,
 static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 				    bool *isidle, unsigned long *maxj)
 {
-	unsigned int curr;
-	int *rcrmp;
-	unsigned int snap;
-
-	curr = (unsigned int)atomic_add_return(0, &rdp->dynticks->dynticks);
-	snap = (unsigned int)rdp->dynticks_snap;
+	unsigned long jtsq;
+	bool *rnhqp;
+	bool *ruqp;
+	struct rcu_node *rnp;
 
 	/*
 	 * If the CPU passed through or entered a dynticks idle phase with
@@ -1186,11 +1184,22 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 	 * have just gone offline can still execute RCU read-side critical
 	 * sections.
 	 */
-	if (ULONG_CMP_GE(rdp->rsp->gp_start + 2, jiffies))
-		return 0;  /* Grace period is not old enough. */
-	barrier();
-	if (cpu_is_offline(rdp->cpu)) {
-		trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, TPS("ofl"));
+	jtsq = jiffies_till_sched_qs;
+	rnp = rdp->mynode;
+	ruqp = per_cpu_ptr(&rcu_dynticks.rcu_urgent_qs, rdp->cpu);
+	if (time_after(jiffies, rdp->rsp->gp_start + jtsq) &&
+	    READ_ONCE(rdp->rcu_qs_ctr_snap) != per_cpu(rcu_dynticks.rcu_qs_ctr, rdp->cpu) &&
+	    READ_ONCE(rdp->gpnum) == rnp->gpnum && !rdp->gpwrap) {
+		//trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, TPS("rqc"));
+		return 1;
+	} else if (time_after(jiffies, rdp->rsp->gp_start + jtsq)) {
+		/* Load rcu_qs_ctr before store to rcu_urgent_qs. */
+		smp_store_release(ruqp, true);
+	}
+
+	/* Check for the CPU being offline. */
+	if (!(rdp->grpmask & rcu_rnp_online_cpus(rnp))) {
+		//trace_rcu_fqs(rdp->rsp->name, rdp->gpnum, rdp->cpu, TPS("ofl"));
 		rdp->offline_fqs++;
 		return 1;
 	}
@@ -1211,23 +1220,15 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp,
 	 * updates are only once every few jiffies, the probability of
 	 * lossage (and thus of slight grace-period extension) is
 	 * quite low.
-	 *
-	 * Note that if the jiffies_till_sched_qs boot/sysfs parameter
-	 * is set too high, we override with half of the RCU CPU stall
-	 * warning delay.
 	 */
-	rcrmp = &per_cpu(rcu_sched_qs_mask, rdp->cpu);
-	if (ULONG_CMP_GE(jiffies,
-			 rdp->rsp->gp_start + jiffies_till_sched_qs) ||
-	    ULONG_CMP_GE(jiffies, rdp->rsp->jiffies_resched)) {
-		if (!(READ_ONCE(*rcrmp) & rdp->rsp->flavor_mask)) {
-			WRITE_ONCE(rdp->cond_resched_completed,
-				   READ_ONCE(rdp->mynode->completed));
-			smp_mb(); /* ->cond_resched_completed before *rcrmp. */
-			WRITE_ONCE(*rcrmp,
-				   READ_ONCE(*rcrmp) + rdp->rsp->flavor_mask);
-		}
-		rdp->rsp->jiffies_resched += 5; /* Re-enable beating. */
+	rnhqp = &per_cpu(rcu_dynticks.rcu_need_heavy_qs, rdp->cpu);
+	if (!READ_ONCE(*rnhqp) &&
+	    (time_after(jiffies, rdp->rsp->gp_start + jtsq) ||
+	     time_after(jiffies, rdp->rsp->jiffies_resched))) {
+		WRITE_ONCE(*rnhqp, true);
+		/* Store rcu_need_heavy_qs before rcu_urgent_qs. */
+		smp_store_release(ruqp, true);
+		rdp->rsp->jiffies_resched += jtsq; /* Re-enable beating. */
 	}
 
 	/* And if it has been a really long time, kick the CPU as well. */
