@@ -340,8 +340,8 @@ static void mb_cache_shrink_worker(struct work_struct *work)
 struct mb_cache *mb_cache_create(int bucket_bits)
 {
 	struct mb_cache *cache;
-	unsigned long bucket_count = 1UL << bucket_bits;
-	unsigned long i;
+	int bucket_count = 1 << bucket_bits;
+	int i;
 
 	cache = kzalloc(sizeof(struct mb_cache), GFP_KERNEL);
 	if (!cache)
