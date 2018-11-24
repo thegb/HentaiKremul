@@ -52,6 +52,14 @@ config CFQ_GROUP_IOSCHED
 	---help---
 	  Enable group IO scheduling in CFQ.
 
+config IOSCHED_TRIPNDROID
+	tristate "TripNDroid IO Scheduler"
+	default n
+	---help---
+	  The TripNDroid IO Scheduler is based on noop, deadline and vr
+	  it uses deadlines to ensure some fairness. The scheduler is build
+	  to keep a minimum overhead. It is mainly build for mobile devices.
+
 choice
 	prompt "Default I/O scheduler"
 	default DEFAULT_MAPLE
@@ -73,6 +81,10 @@ choice
 
 	config DEFAULT_MAPLE
 		bool "Maple" if IOSCHED_MAPLE=y
+
+	config DEFAULT_TRIPNDROID
+		bool "TD" if IOSCHED_TRIPNDROID=y
+
 endchoice
 
 config DEFAULT_IOSCHED
@@ -82,6 +94,9 @@ config DEFAULT_IOSCHED
 	default "cfq" if DEFAULT_CFQ
 	default "noop" if DEFAULT_NOOP
 	default "maple" if DEFAULT_MAPLE
+	default "tripndroid" if DEFAULT_TRIPNDROID
+
+
 endmenu
 
 endif
