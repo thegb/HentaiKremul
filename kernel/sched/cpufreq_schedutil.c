@@ -170,7 +170,7 @@ static void sugov_update_commit(struct sugov_policy *sg_policy, u64 time,
 			return;
 
 		policy->cur = next_freq;
-		trace_cpu_frequency(next_freq, smp_processor_id());
+//		trace_cpu_frequency(next_freq, smp_processor_id());
 	} else {
 		if (use_pelt())
 			sg_policy->work_in_progress = true;
@@ -208,8 +208,8 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 	unsigned int freq = arch_scale_freq_invariant() ?
 				policy->cpuinfo.max_freq : policy->cur;
 
-	freq = (freq + (freq >> 2)) * int_sqrt(util * 100 / max) / 10;
-	trace_sugov_next_freq(policy->cpu, util, max, freq);
+	freq = (freq + (freq >> 2)) * util / max;
+	//trace_sugov_next_freq(policy->cpu, util, max, freq);
 
 	if (freq == sg_policy->cached_raw_freq && !sg_policy->need_freq_update)
 		return sg_policy->next_freq;

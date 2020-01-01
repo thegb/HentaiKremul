@@ -506,8 +506,8 @@ void resched_curr(struct rq *rq)
 
 	if (set_nr_and_not_polling(curr))
 		smp_send_reschedule(cpu);
-	else
-		trace_sched_wake_idle_without_ipi(cpu);
+	//else
+	//	trace_sched_wake_idle_without_ipi(cpu);
 }
 
 void resched_cpu(int cpu)
@@ -577,8 +577,8 @@ static void wake_up_idle_cpu(int cpu)
 
 	if (set_nr_and_not_polling(rq->idle))
 		smp_send_reschedule(cpu);
-	else
-		trace_sched_wake_idle_without_ipi(cpu);
+	//else
+	//	trace_sched_wake_idle_without_ipi(cpu);
 }
 
 static bool wake_up_full_nohz_cpu(int cpu)
@@ -769,7 +769,7 @@ static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 	}
 	p->sched_class->enqueue_task(rq, p, flags);
 	walt_update_last_enqueue(p);
-	trace_sched_enq_deq_task(p, 1, cpumask_bits(&p->cpus_allowed)[0]);
+	//trace_sched_enq_deq_task(p, 1, cpumask_bits(&p->cpus_allowed)[0]);
 }
 
 static inline void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
@@ -780,7 +780,7 @@ static inline void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
 		psi_dequeue(p, flags & DEQUEUE_SLEEP);
 	}
 	p->sched_class->dequeue_task(rq, p, flags);
-	trace_sched_enq_deq_task(p, 0, cpumask_bits(&p->cpus_allowed)[0]);
+//	trace_sched_enq_deq_task(p, 0, cpumask_bits(&p->cpus_allowed)[0]);
 }
 
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
@@ -1283,7 +1283,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 #endif
 #endif
 
-	trace_sched_migrate_task(p, new_cpu, task_util(p));
+	//trace_sched_migrate_task(p, new_cpu, task_util(p));
 
 	if (task_cpu(p) != new_cpu) {
 		if (p->sched_class->migrate_task_rq)
@@ -1398,7 +1398,7 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p)
 	if (!cpumask_test_cpu(arg.src_cpu, tsk_cpus_allowed(arg.dst_task)))
 		goto out;
 
-	trace_sched_swap_numa(cur, arg.src_cpu, p, arg.dst_cpu);
+	//trace_sched_swap_numa(cur, arg.src_cpu, p, arg.dst_cpu);
 	ret = stop_two_cpus(arg.dst_cpu, arg.src_cpu, migrate_swap_stop, &arg);
 
 out:
@@ -1460,7 +1460,7 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
 		 * just go back and repeat.
 		 */
 		rq = task_rq_lock(p, &rf);
-		trace_sched_wait_task(p);
+		//trace_sched_wait_task(p);
 		running = task_running(rq, p);
 		queued = task_on_rq_queued(p);
 		ncsw = 0;
@@ -1754,7 +1754,7 @@ static void ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags,
 {
 	check_preempt_curr(rq, p, wake_flags);
 	p->state = TASK_RUNNING;
-	trace_sched_wakeup(p);
+	//trace_sched_wakeup(p);
 
 #ifdef CONFIG_SMP
 	if (p->sched_class->task_woken) {
@@ -1914,8 +1914,8 @@ static void ttwu_queue_remote(struct task_struct *p, int cpu, int wake_flags)
 	if (llist_add(&p->wake_entry, &cpu_rq(cpu)->wake_list)) {
 		if (!set_nr_if_polling(rq->idle))
 			smp_send_reschedule(cpu);
-		else
-			trace_sched_wake_idle_without_ipi(cpu);
+		//else
+		//	trace_sched_wake_idle_without_ipi(cpu);
 	}
 }
 
@@ -1929,9 +1929,7 @@ void wake_up_if_idle(int cpu)
 	if (!is_idle_task(rcu_dereference(rq->curr)))
 		goto out;
 
-	if (set_nr_if_polling(rq->idle)) {
-		trace_sched_wake_idle_without_ipi(cpu);
-	} else {
+	if (!(set_nr_if_polling(rq->idle))) {
 		raw_spin_lock_irqsave(&rq->lock, flags);
 		if (is_idle_task(rq->curr))
 			smp_send_reschedule(cpu);
@@ -2101,7 +2099,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	if (!(p->state & state))
 		goto out;
 
-	trace_sched_waking(p);
+	//trace_sched_waking(p);
 
 	success = 1; /* we're going to change ->state */
 	cpu = task_cpu(p);
@@ -2250,7 +2248,7 @@ static void try_to_wake_up_local(struct task_struct *p, struct rq_flags *rf)
 	if (!(p->state & TASK_NORMAL))
 		goto out;
 
-	trace_sched_waking(p);
+	//trace_sched_waking(p);
 
 	if (!task_on_rq_queued(p)) {
 		u64 wallclock = sched_ktime_clock();
@@ -2712,7 +2710,7 @@ void wake_up_new_task(struct task_struct *p)
 	mark_task_starting(p);
 	activate_task(rq, p, ENQUEUE_WAKEUP_NEW);
 	p->on_rq = TASK_ON_RQ_QUEUED;
-	trace_sched_wakeup_new(p);
+	//trace_sched_wakeup_new(p);
 	check_preempt_curr(rq, p, WF_FORK);
 #ifdef CONFIG_SMP
 	if (p->sched_class->task_woken) {
@@ -3355,7 +3353,7 @@ static inline void preempt_latency_start(int val)
 		ps->caddr[3] = CALLER_ADDR3;
 		ps->irqs_disabled = irqs_disabled();
 
-		trace_preempt_off(CALLER_ADDR0, ip);
+		//trace_preempt_off(CALLER_ADDR0, ip);
 	}
 }
 
@@ -3396,11 +3394,11 @@ static inline void preempt_latency_stop(int val)
 		 * Trace preempt disable stack if preemption
 		 * is disabled for more than the threshold.
 		 */
-		if (delta > sysctl_preemptoff_tracing_threshold_ns)
-			trace_sched_preempt_disable(delta, ps->irqs_disabled,
-						ps->caddr[0], ps->caddr[1],
-						ps->caddr[2], ps->caddr[3]);
-		trace_preempt_on(CALLER_ADDR0, get_lock_parent_ip());
+		//if (delta > sysctl_preemptoff_tracing_threshold_ns)
+		//	trace_sched_preempt_disable(delta, ps->irqs_disabled,
+		//				ps->caddr[0], ps->caddr[1],
+		//				ps->caddr[2], ps->caddr[3]);
+		//trace_preempt_on(CALLER_ADDR0, get_lock_parent_ip());
 	}
 }
 
@@ -3644,7 +3642,7 @@ static void __sched notrace __schedule(bool preempt)
 		rq->curr = next;
 		++*switch_count;
 
-		trace_sched_switch(preempt, prev, next);
+		//trace_sched_switch(preempt, prev, next);
 		rq = context_switch(rq, prev, next, &rf); /* unlocks the rq */
 	} else {
 		update_task_ravg(prev, rq, TASK_UPDATE, wallclock, 0);
@@ -3917,7 +3915,7 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
 		goto out_unlock;
 	}
 
-	trace_sched_pi_setprio(p, prio);
+	//trace_sched_pi_setprio(p, prio);
 	oldprio = p->prio;
 
 	if (oldprio == prio)
@@ -5702,7 +5700,7 @@ int migrate_task_to(struct task_struct *p, int target_cpu)
 
 	/* TODO: This is not properly updating schedstats */
 
-	trace_sched_move_numa(p, curr_cpu, target_cpu);
+	//trace_sched_move_numa(p, curr_cpu, target_cpu);
 	return stop_one_cpu(curr_cpu, migration_cpu_stop, &arg);
 }
 
@@ -6091,8 +6089,8 @@ int sched_isolate_cpu(int cpu)
 
 out:
 	cpu_maps_update_done();
-	trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
-			    start_time, 1);
+	//trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
+	//		    start_time, 1);
 	return ret_code;
 }
 
@@ -6140,8 +6138,8 @@ int sched_unisolate_cpu_unlocked(int cpu)
 	}
 
 out:
-	trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
-			    start_time, 0);
+	//trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
+	//		    start_time, 0);
 	return ret_code;
 }
 
