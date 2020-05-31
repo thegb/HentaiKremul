@@ -1334,9 +1334,7 @@ int32_t cam_cci_core_cfg(struct v4l2_subdev *sd,
 	CAM_DBG(CAM_CCI, "cmd %d", cci_ctrl->cmd);
 	switch (cci_ctrl->cmd) {
 	case MSM_CCI_INIT:
-		mutex_lock(&cci_dev->init_mutex);
 		rc = cam_cci_init(sd, cci_ctrl);
-		mutex_unlock(&cci_dev->init_mutex);
 		break;
 	case MSM_CCI_RELEASE:
 		rc = cam_cci_release(sd, cci_ctrl);
