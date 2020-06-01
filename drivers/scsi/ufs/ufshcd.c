@@ -2015,19 +2015,7 @@ static int ufshcd_hibern8_hold(struct ufs_hba *hba, bool async)
 start:
 	switch (hba->hibern8_on_idle.state) {
 	case HIBERN8_EXITED:
-		break;
-	case REQ_HIBERN8_ENTER:
-		if (cancel_delayed_work(&hba->hibern8_on_idle.enter_work)) {
-			hba->hibern8_on_idle.state = HIBERN8_EXITED;
-			trace_ufshcd_hibern8_on_idle(dev_name(hba->dev),
-				hba->hibern8_on_idle.state);
-			break;
-		}
-		/*
-		 * If we here, it means Hibern8 enter work is either done or
-		 * currently running. Hence, fall through to cancel hibern8
-		 * work and exit hibern8.
-		 */
+       	        break;
 	case HIBERN8_ENTERED:
 		__ufshcd_scsi_block_requests(hba);
 		hba->hibern8_on_idle.state = REQ_HIBERN8_EXIT;
@@ -3795,10 +3783,10 @@ static int __ufshcd_query_descriptor(struct ufs_hba *hba,
 		goto out_unlock;
 	}
 
-	hba->dev_cmd.query.descriptor = NULL;
 	*buf_len = be16_to_cpu(response->upiu_res.length);
 
 out_unlock:
+	hba->dev_cmd.query.descriptor = NULL;
 	mutex_unlock(&hba->dev_cmd.lock);
 	if (has_read_lock)
 		up_read(&hba->lock);
