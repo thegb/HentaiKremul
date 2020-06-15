@@ -121,7 +121,6 @@ static int gc_thread_func(void *data)
 		if (sbi->gc_mode == GC_URGENT || sbi->rapid_gc) {
 			if (!sbi->rapid_gc)
 				wait_ms = gc_th->urgent_sleep_time;
-			mutex_lock(&sbi->gc_mutex);
 			goto do_gc;
 		}
 

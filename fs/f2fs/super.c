@@ -3652,10 +3652,6 @@ static int __init init_f2fs_fs(void)
 	f2fs_init_rapid_gc();
 
 	return 0;
-free_bio_enrty_cache:
-	f2fs_destroy_bio_entry_cache();
-free_post_read:
-	f2fs_destroy_post_read_processing();
 free_root_stats:
 	f2fs_destroy_root_stats();
 	unregister_filesystem(&f2fs_fs_type);
