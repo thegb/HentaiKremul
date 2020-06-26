@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.9.227-HentaiKremul Kernel Configuration
+# Linux/arm64 4.9.228-HentaiKremul Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -2260,6 +2260,7 @@ CONFIG_HW_RANDOM_CAVIUM=y
 CONFIG_MSM_ADSPRPC=y
 # CONFIG_MSM_RDBG is not set
 CONFIG_XLOGCHAR=y
+CONFIG_FRANDOM=y
 
 #
 # I2C support
@@ -3308,6 +3309,8 @@ CONFIG_LOGO=y
 # CONFIG_LOGO_LINUX_MONO is not set
 # CONFIG_LOGO_LINUX_VGA16 is not set
 CONFIG_LOGO_LINUX_CLUT224=y
+CONFIG_KLAPSE=y
+CONFIG_SOUND_CONTROL=y
 CONFIG_SOUND=y
 # CONFIG_SOUND_OSS_CORE is not set
 CONFIG_SND=y
